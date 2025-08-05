@@ -1,0 +1,19 @@
+datasource db {
+  provider = "mysql"
+  url      = env("MYSQL_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  uuid      String  @unique @default(uuid())
+  email     String  @unique @db.VarChar(256)
+  password  String
+  firstName String? @map("first_name") @db.VarChar(256)
+  lastName  String? @map("last_name") @db.VarChar(256)
+
+  @@map("users")
+}
