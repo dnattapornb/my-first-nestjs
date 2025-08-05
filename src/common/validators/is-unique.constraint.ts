@@ -4,20 +4,31 @@ import {
   ValidationArguments,
 } from 'class-validator';
 import { Injectable } from '@nestjs/common';
-import { UsersService } from '../../users/users.service';
+import { PrismaService } from '../../prisma/prisma.service';
+
+export interface IsUniqueConstraintInput {
+  table: string;
+  column: string;
+}
 
 @ValidatorConstraint({ name: 'isUnique', async: true })
 @Injectable()
 export class IsUniqueConstraint implements ValidatorConstraintInterface {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async validate(value: any, args: ValidationArguments) {
-    const [relatedProperty] = args.constraints;
-    const user = await this.usersService.findByEmail(value);
-    return !user;
+    const { table, column }: IsUniqueConstraintInput = args.constraints[0];
+
+    const record = await this.prisma[table].findFirst({
+      where: { [column]: value },
+    });
+
+    return !record;
   }
 
   defaultMessage(args: ValidationArguments) {
-    return `email '${args.value}' already exists.`;
+    const { table, column }: IsUniqueConstraintInput = args.constraints[0];
+
+    return `${column} '${args.value}' already exists in ${table}.`;
   }
 }
