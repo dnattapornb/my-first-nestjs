@@ -6,6 +6,7 @@ import { ProductsModule } from './products/products.module';
 import { UsersModule } from './users/users.module';
 import { DatabaseModule } from './database/database.module';
 import { IsUniqueConstraint } from './common/validators/is-unique.constraint';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { IsUniqueConstraint } from './common/validators/is-unique.constraint';
     ProductsModule,
     UsersModule,
     DatabaseModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],
