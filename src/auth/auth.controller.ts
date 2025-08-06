@@ -10,11 +10,13 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
 import { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -45,6 +47,14 @@ export class AuthController {
     return { message: 'Login successful' };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('logout')
+  async logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('access_token');
+
+    return { message: 'Logout successful' };
+  }
+
   @Get('verify-email')
   async verifyEmail(@Query('token') token: string, @Res() response: Response) {
     const user = await this.authService.verifyEmail(token);
@@ -63,11 +73,18 @@ export class AuthController {
     response.redirect('/users/profile');
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('access_token');
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto.email);
+  }
 
-    return { message: 'Logout successful' };
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    await this.authService.resetPassword(resetPasswordDto);
+    return {
+      message: 'Password has been reset successfully.',
+    };
   }
 }

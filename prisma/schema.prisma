@@ -15,18 +15,29 @@ datasource db {
 }
 
 model User {
-  id                 Int                 @id @default(autoincrement())
-  uuid               String              @unique @default(uuid())
-  email              String              @unique
-  password           String
-  firstName          String?             @map("first_name")
-  lastName           String?             @map("last_name")
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime?           @updatedAt @map("updated_at")
-  isVerified         Boolean             @default(false) @map("is_verified")
-  verificationTokens VerificationToken[]
+  id                  Int                  @id @default(autoincrement())
+  uuid                String               @unique @default(uuid())
+  email               String               @unique
+  password            String
+  firstName           String?              @map("first_name")
+  lastName            String?              @map("last_name")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime?            @updatedAt @map("updated_at")
+  isVerified          Boolean              @default(false) @map("is_verified")
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model VerificationToken {

@@ -12,7 +12,8 @@ import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import { DatabaseService } from '../database/database.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
-import { User } from '@prisma/client';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { User, VerificationToken, PasswordResetToken } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +43,7 @@ export class AuthService {
       },
     });
 
-    // await this.mailService.sendUserConfirmation(user, token);
+    await this.mailService.sendUserConfirmation(user, token);
 
     return {
       message: 'Registration successful. Please check your email to verify your account.'
@@ -97,5 +98,49 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+
+    if (user) {
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      await this.databaseService.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          token,
+          expiresAt,
+        },
+      });
+
+      await this.mailService.sendPasswordReset(user, token);
+    }
+
+    return {
+      message: 'If an account with that email exists, we have sent a password reset link.',
+    };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const { token, password } = resetPasswordDto;
+
+    const resetToken = await this.databaseService.passwordResetToken.findUnique({
+      where: { token },
+    });
+
+    if (!resetToken || new Date() > resetToken.expiresAt) {
+      throw new BadRequestException('Invalid or expired password reset token.');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await this.databaseService.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hashedPassword },
+    });
+
+    await this.databaseService.passwordResetToken.delete({ where: { id: resetToken.id } });
   }
 }
