@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { DatabaseModule } from './database/database.module';
 import { IsUniqueConstraint } from './common/validators/is-unique.constraint';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     DatabaseModule,
     AuthModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],

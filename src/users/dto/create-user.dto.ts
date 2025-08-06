@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 import { IsUnique } from '../../common/decorators/is-unique.decorator';
 
 export class CreateUserDto {
@@ -24,4 +24,8 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   readonly lastName: string;
+
+  @IsBoolean()
+  @IsOptional()
+  readonly isVerified: boolean;
 }
