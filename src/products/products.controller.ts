@@ -13,14 +13,13 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { AuthorizationGuard } from '../auth/guards/authorization.guard';
 import { Role, PermissionAction } from '@prisma/client';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 
 @Controller('products')
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, AuthorizationGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
@@ -32,6 +31,8 @@ export class ProductsController {
   }
 
   @Get(':id')
+  @Roles(Role.USER, Role.ADMIN, Role.MODERATOR)
+  @RequirePermissions([PermissionAction.READ, 'Product'])
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.findOne(id);
   }
