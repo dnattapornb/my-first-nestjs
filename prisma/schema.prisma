@@ -14,6 +14,19 @@ datasource db {
   url      = env("MYSQL_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum PermissionAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+}
+
 model User {
   id                  Int                  @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
@@ -24,10 +37,35 @@ model User {
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime?            @updatedAt @map("updated_at")
   isVerified          Boolean              @default(false) @map("is_verified")
+  role                Role                 @default(USER)
   verificationTokens  VerificationToken[]
   passwordResetTokens PasswordResetToken[]
+  permissions         UsersOnPermissions[]
 
   @@map("users")
+}
+
+model Permission {
+  id      Int                  @id @default(autoincrement())
+  action  PermissionAction
+  subject String
+  users   UsersOnPermissions[]
+
+  @@unique([action, subject])
+  @@map("permissions")
+}
+
+model UsersOnPermissions {
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int        @map("user_id")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  // [TH] เพิ่ม onDelete: Cascade เพื่อให้ชัดเจนว่าเมื่อ Permission ถูกลบ, record นี้จะถูกลบตามไปด้วย
+  // [EN] Added onDelete: Cascade to make it clear that when a Permission is deleted, this record is also deleted.
+  permissionId Int        @map("permission_id")
+  assignedAt   DateTime   @default(now()) @map("assigned_at")
+
+  @@unique([userId, permissionId])
+  @@map("users_on_permissions")
 }
 
 model PasswordResetToken {
