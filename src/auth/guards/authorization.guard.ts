@@ -19,25 +19,20 @@ export class AuthorizationGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    const requiredPermissions =
-      this.reflector.getAllAndOverride<RequiredPermission[]>(PERMISSIONS_KEY, [
-        context.getHandler(),
-        context.getClass(),
-      ]);
+    const requiredPermissions = this.reflector.getAllAndOverride<
+      RequiredPermission[]
+    >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
 
-    // [TH] ถ้าไม่มีการกำหนดสิทธิ์ใดๆ, ให้ผ่านได้เลย
-    // [EN] If no permissions are required, allow access.
-    if (!requiredRoles && !requiredPermissions) {
-      return true;
-    }
+    // [TH] ปรับปรุง: ใช้หลักการ "Deny by Default" ถ้าไม่มีการกำหนดสิทธิ์ใดๆ เลย ให้ถือว่าห้ามเข้า
+    // [EN] Improvement: Apply "Deny by Default". If no permissions are specified, deny access.
+    if (!requiredRoles?.length && !requiredPermissions?.length) return false;
 
     const { user } = context.switchToHttp().getRequest();
 
     // [TH] ตรวจสอบ Role ก่อนเป็นอันดับแรก
     // [EN] Check the role first.
-    const hasRequiredRole = requiredRoles
-      ? requiredRoles.some((role) => user.role === role)
-      : true;
+    const hasRequiredRole =
+      !requiredRoles || requiredRoles.some((role) => user.role === role);
 
     if (!hasRequiredRole) {
       return false;
@@ -55,10 +50,20 @@ export class AuthorizationGuard implements CanActivate {
     // [TH] Rule 2: ถ้าเป็น ADMIN, เช็คเฉพาะ permission 'DELETE'
     // [EN] Rule 2: If the user is an ADMIN, only check for 'DELETE' permission.
     if (user.role === Role.ADMIN) {
-      const requiresDelete = requiredPermissions?.some(
+      // [TH] ค้นหา permission 'DELETE' ที่ endpoint นี้ต้องการ
+      // [EN] Find the 'DELETE' permission required by this endpoint.
+      const deletePermissionNeeded = requiredPermissions?.find(
         (p) => p[0] === PermissionAction.DELETE,
       );
-      return requiresDelete ? user.permissions.includes('DELETE:Product') : true;
+
+      // [TH] ถ้า endpoint ไม่ต้องการสิทธิ์ DELETE, ADMIN ผ่านได้เลย
+      // [EN] If the endpoint doesn't require DELETE permission, the ADMIN can pass.
+      if (!deletePermissionNeeded) return true;
+
+      // [TH] ถ้าต้องการ, เช็คว่า ADMIN มีสิทธิ์นั้นหรือไม่ (ไม่ใช่การ hardcode)
+      // [EN] If required, check if the ADMIN has that specific permission (not hardcoded).
+      const permissionString = `${deletePermissionNeeded[0]}:${deletePermissionNeeded[1]}`;
+      return user.permissions.includes(permissionString);
     }
 
     // [TH] Rule 3: ถ้าเป็น USER, ต้องมี permission ครบทุกอย่างที่กำหนด
