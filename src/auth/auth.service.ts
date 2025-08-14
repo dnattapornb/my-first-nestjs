@@ -142,6 +142,8 @@ export class AuthService {
       sub: user.id,
       uuid: user.uuid,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
       permissions: user.permissions?.map((p) => `${p.permission.action}:${p.permission.subject}`) || [],
     };
