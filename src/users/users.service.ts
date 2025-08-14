@@ -31,6 +31,23 @@ export class UsersService {
     });
   }
 
+  async findByEmailWithFullPermissions(email: string): Promise<User | null> {
+    const user = await this.databaseService.user.findUnique({
+      where: { email: email },
+      include: {
+        permissions: {
+          include: { permission: true },
+        },
+      },
+    });
+
+    if (!user) {
+      // throw new NotFoundException(`User with email #${email} not found`);
+    }
+
+    return user;
+  }
+
   async create(createUserDto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 

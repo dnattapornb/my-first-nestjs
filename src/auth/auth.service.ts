@@ -47,7 +47,7 @@ export class AuthService {
   }
 
   async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmailWithFullPermissions(email);
 
     if (
       user &&
@@ -91,13 +91,7 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = {
-      sub: user.id,
-      uuid: user.uuid,
-      email: user.email,
-      role: user.role,
-      permissions: user.permissions?.map((p) => `${p.action}:${p.subject}`) || [],
-    };
+    const payload = this._createJwtPayload(user);
 
     return {
       accessToken: this.jwtService.sign(payload),
@@ -141,6 +135,16 @@ export class AuthService {
     await this.databaseService.passwordResetToken.delete({
       where: { id: resetToken.id },
     });
+  }
+
+  private _createJwtPayload(user: any) {
+    return {
+      sub: user.id,
+      uuid: user.uuid,
+      email: user.email,
+      role: user.role,
+      permissions: user.permissions?.map((p) => `${p.permission.action}:${p.permission.subject}`) || [],
+    };
   }
 
   private _generateSecureToken(): string {
