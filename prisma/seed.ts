@@ -74,7 +74,7 @@ async function main() {
   });
   console.log(`  Created users: Admin, Moderator, Regular User`);
 
-  // --- 3. Seed UsersOnPermissions (Connect Users to Permissions) ---
+  // --- 3. Seed PermissionOnUsers (Connect Users to Permissions) ---
   console.log('\nAssigning permissions to users...');
 
   // [TH] ดึง permissions ทั้งหมดมาเก็บใน Map เพื่อให้ค้นหาได้เร็ว
@@ -118,8 +118,8 @@ async function main() {
 
   // [TH] ลบข้อมูลเก่าและสร้างใหม่ทั้งหมด
   // [EN] Delete old data and create all new assignments.
-  await prisma.usersOnPermissions.deleteMany({});
-  await prisma.usersOnPermissions.createMany({
+  await prisma.permissionOnUser.deleteMany({});
+  await prisma.permissionOnUser.createMany({
     data: [
       ...userPermissionLinks,
       ...moderatorPermissions,
