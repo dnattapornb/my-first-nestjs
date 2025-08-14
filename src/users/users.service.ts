@@ -10,12 +10,23 @@ export class UsersService {
   constructor(private databaseService: DatabaseService) {}
 
   async findAll(): Promise<User[]> {
-    return this.databaseService.user.findMany();
+    return this.databaseService.user.findMany({
+      include: {
+        permissions: {
+          include: { permission: true },
+        },
+      },
+    });
   }
 
   async findOne(id: number): Promise<User> {
     const user = await this.databaseService.user.findUnique({
       where: { id: id },
+      include: {
+        permissions: {
+          include: { permission: true },
+        },
+      },
     });
 
     if (!user) {
